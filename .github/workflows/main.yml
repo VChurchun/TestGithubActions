@@ -1,0 +1,157 @@
+name: Build preparation
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'dev'
+      version_name:
+        description: 'Version name'
+        required: false
+
+      version_code:
+        description: 'Version code'
+        required: false
+
+jobs:
+  execute-commands:
+    runs-on: ubuntu-latest
+    
+    # Permissions are required for the GITHUB_TOKEN to push changes or modify PRs
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch 200 latest commits, should be enough for ordinary build
+          fetch-depth: 200
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Parse build type
+        run: |
+          # Make appropriate build name, exit the script if build variant is unknown
+          case ${{ github.event.inputs.build_type }} in
+          dev) build_name="LS Dev" ;;
+          proxy) build_name="LS Proxy" ;;
+          release) build_name="Livescore" ;;
+          *)
+            echo "Unknown build variant, should be one of these: 'dev', 'proxy', 'release'"
+            exit 1
+          esac
+
+          # Save to environent to share across steps
+          echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
+
+      - name: Update version name and version code
+        run: |
+          VERSIONS_FILE="media/version.properties"
+          VERSION_NAME_KEY="VERSION_NAME"
+          VERSION_CODE_KEY="VERSION_CODE"
+
+          # Create properties dictionary from file
+          declare -A version_properties
+          while IFS='=' read -r key value; do
+            version_properties["$key"]="$value"
+          done < <(tr -d '\r' < "$VERSIONS_FILE") # handle carriage return in CRLF
+
+          # Check if there is an override for version name
+          if [ -n "${{ github.event.inputs.version_name }}" ]; then
+            version_properties[$VERSION_NAME_KEY]=${{ github.event.inputs.version_name }}
+          fi
+
+          # Check if there is an overrider for version code
+          if [ -n "${{ github.event.inputs.version_code }}" ]; then
+            version_properties[$VERSION_CODE_KEY]=${{ github.event.inputs.version_code }}
+            else
+            # If not -- increment existing
+            existing_version_code=${version_properties[$VERSION_CODE_KEY]}
+            # Check if version code is missing
+            if [ -z "$existing_version_code" ]; then
+                # Fallback to 1 if version is missing
+                new_version_code=1
+                version_properties[$VERSION_CODE_KEY]="$new_version_code"
+            else
+                # Increment existing version, only dev variant supports uneven numbers
+                if ((existing_version_code % 2 == 0)) && [ "${{ github.event.inputs.build_type }}" != "dev" ]; then
+                  new_version_code=$((existing_version_code + 2))
+                else
+                  new_version_code=$((existing_version_code + 1))
+                fi
+                version_properties[$VERSION_CODE_KEY]="$new_version_code"
+              fi
+          fi
+
+          # Keep version info in environment variables to share across steps
+          echo "VERSION_NAME=${version_properties[$VERSION_NAME_KEY]}" >> $GITHUB_ENV
+          echo "VERSION_CODE=${version_properties[$VERSION_CODE_KEY]}" >> $GITHUB_ENV
+
+          # Write version properties to the file
+          {
+            for k in "${!version_properties[@]}"; do
+                echo "$k=${version_properties[$k]}"
+            done
+          } > $VERSIONS_FILE
+
+      - name: Generating release notes
+        run: |
+          RELEASE_NOTES_FILE="release_notes.txt"
+
+          # Checkout new branch
+          branch_name="build/${BUILD_NAME// /_}_${VERSION_NAME}_${VERSION_CODE}"
+          git switch -c "$branch_name" ${{ github.ref_name }}
+
+          # Build release notes header
+          release_notes_header="${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
+          echo "$release_notes_header" > $RELEASE_NOTES_FILE
+          
+          # Try getting the latest tag for this version
+          latest_tag=$(git tag --list "*_${VERSION_NAME}_*" --sort=-creatordate | head -n 1)
+
+          # If there was no tags for this version, just take the latest
+          if [[ -z "$latest_tag" ]]; then
+              latest_tag=$(git describe --tags --abbrev=0)
+          fi
+
+          # Get commits that start with "* Fixed"
+          fixed_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* fixed:')
+
+          # Get commits that start with "* Implemented"
+          implemented_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* implemented:')
+
+          # Get all other commits that start with "*"
+          other_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i -E '^\*' | grep -v -i -E '^\* (fixed:|implemented:)')
+
+          # Receives release notes section header and section's commits, fills release notes file
+          fill_release_notes_section() {
+            header=$1
+            commits=$2
+
+            if [ -n "$commits" ]; then
+              echo "$header" >> $RELEASE_NOTES_FILE
+              while IFS= read -r line; do
+                # Retain only symbols after "*", "Implemented:", "Fixed:"
+                cut_line=$(echo "$line" | sed -E 's/.*[[:space:]]*(Fixed:|Implemented:|\*)[[:space:]]*//i')
+                echo "  $cut_line" >> $RELEASE_NOTES_FILE
+              done <<< "$commits"
+            fi
+          }
+
+          # Add sections to release notes
+          fill_release_notes_section "Implemented:" "$implemented_commits"
+          fill_release_notes_section "Fixed:" "$fixed_commits"
+          fill_release_notes_section "Other:" "$other_commits"
+
+          git add .
+          commit_message="* Build: $release_notes_header"
+          git commit -m "$commit_message"
+          git push origin "$branch_name"
+          gh pr create --base ${{ github.ref_name }} --title "$commit_message" --label "build_preparation"
