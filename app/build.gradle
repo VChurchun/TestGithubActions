@@ -14,8 +14,11 @@ android {
         applicationId "com.example.testgithubactions"
         minSdk 24
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        def versionPropsFile = file("version.properties")
+        def versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionPropsFile))
+        versionCode versionProps['VERSION_CODE'].toInteger()
+        versionName versionProps['VERSION_NAME']
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
