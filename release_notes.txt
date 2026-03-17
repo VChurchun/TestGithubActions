@@ -1,0 +1,11 @@
+LS Dev 8.13 (1721)
+Other:
+  Updated
+  Added force push
+  Fixed redundant space
+  Added body to gh pr create
+  Moved new branch to PR step
+  Updated logging, added GH_TOKEN env variable
+  Added empty commits support
+  replaced comments with echo
+  Updated fetch-depth
