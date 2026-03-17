@@ -122,13 +122,13 @@ jobs:
           fi
 
           echo "Get commits that start with "* Fixed""
-          fixed_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* fixed:')
+          fixed_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* fixed:' || true)
 
           echo "Get commits that start with "* Implemented""
-          implemented_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* implemented:')
+          implemented_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* implemented:' || true)
 
           echo "Get all other commits that start with "*""
-          other_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i -E '^\*' | grep -v -i -E '^\* (fixed:|implemented:)')
+          other_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i -E '^\*' | grep -v -i -E '^\* (fixed:|implemented:)' || true)
 
           echo "Receives release notes section header and section's commits, fills release notes file"
           fill_release_notes_section() {
