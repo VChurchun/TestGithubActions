@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Fetch 200 latest commits, should be enough for ordinary build
+          # Fetch last 200 commits, should be enough for ordinary build
           fetch-depth: 200
 
       - name: Configure Git
