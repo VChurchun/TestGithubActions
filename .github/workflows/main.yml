@@ -53,7 +53,7 @@ jobs:
 
       - name: Update version name and version code
         run: |
-          VERSIONS_FILE="media/version.properties"
+          VERSIONS_FILE="app/version.properties"
           VERSION_NAME_KEY="VERSION_NAME"
           VERSION_CODE_KEY="VERSION_CODE"
 
