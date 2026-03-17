@@ -158,4 +158,4 @@ jobs:
           commit_message="* Build: ${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
           git commit -m "$commit_message"
           git push origin "$branch_name" --force
-          gh pr create --base ${{ github.ref_name }} --title "$commit_message" --body "" --label "build_preparation"
+          gh pr create --base ${{ github.ref_name }} --title "$commit_message" --body "" --label "build_preparation,${{ github.build_type }}"
