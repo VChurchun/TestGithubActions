@@ -110,6 +110,7 @@ jobs:
           echo "$release_notes_header" > $RELEASE_NOTES_FILE
           
           echo "Getting the latest tag for this version"
+          git fetch --tags --force
           latest_tag=$(git tag --list "*_${VERSION_NAME}_*" --sort=-creatordate | head -n 1)
 
           if [[ -z "$latest_tag" ]]; then
