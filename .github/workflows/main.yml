@@ -105,10 +105,6 @@ jobs:
         run: |
           RELEASE_NOTES_FILE="release_notes.txt"
 
-          echo "Checking out new branch"
-          branch_name="build/${BUILD_NAME// /_}_${VERSION_NAME}_${VERSION_CODE}"
-          git switch -c "$branch_name" ${{ github.ref_name }}
-
           echo "Building release notes header"
           release_notes_header="${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
           echo "$release_notes_header" > $RELEASE_NOTES_FILE
@@ -153,6 +149,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "Checking out new branch"
+          branch_name="build/${BUILD_NAME// /_}_${VERSION_NAME}_${VERSION_CODE}"
+          git switch -c "$branch_name" ${{ github.ref_name }}
+          
           git add .
           commit_message="* Build: ${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
           git commit -m "$commit_message"
