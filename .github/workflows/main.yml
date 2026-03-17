@@ -7,6 +7,7 @@ on:
         description: 'Build type (dev/proxy/release)'
         required: true
         default: 'dev'
+
       version_name:
         description: 'Version name (Optional)'
         required: false
@@ -19,7 +20,6 @@ jobs:
   execute-commands:
     runs-on: ubuntu-latest
     
-    # Permissions are required for the GITHUB_TOKEN to push changes or modify PRs
     permissions:
       contents: write
       pull-requests: write
@@ -48,7 +48,7 @@ jobs:
             exit 1
           esac
 
-          # Save to environent to share across steps
+          # Save to environment to share across steps
           echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
 
       - name: Update version name and version code
@@ -57,30 +57,30 @@ jobs:
           VERSION_NAME_KEY="VERSION_NAME"
           VERSION_CODE_KEY="VERSION_CODE"
 
-          # Create properties dictionary from file
+          echo "Creating properties dictionary from file"
           declare -A version_properties
           while IFS='=' read -r key value; do
             version_properties["$key"]="$value"
           done < <(sed '$a\' "$VERSIONS_FILE" | tr -d '\r')
 
-          # Check if there is an override for version name
+          echo "Checking if there is an override for version name"
           if [ -n "${{ github.event.inputs.version_name }}" ]; then
             version_properties[$VERSION_NAME_KEY]=${{ github.event.inputs.version_name }}
           fi
 
-          # Check if there is an overrider for version code
+          echo "Checking if there is an override for version code"
           if [ -n "${{ github.event.inputs.version_code }}" ]; then
             version_properties[$VERSION_CODE_KEY]=${{ github.event.inputs.version_code }}
             else
-            # If not -- increment existing
             existing_version_code=${version_properties[$VERSION_CODE_KEY]}
             # Check if version code is missing
             if [ -z "$existing_version_code" ]; then
-                # Fallback to 1 if version is missing
+                echo "Version code is missing - fallback to 1"
                 new_version_code=1
                 version_properties[$VERSION_CODE_KEY]="$new_version_code"
             else
-                # Increment existing version, only dev variant supports uneven numbers
+                echo "Incrementing existing version code"
+                # Only dev variant supports uneven numbers
                 if ((existing_version_code % 2 == 0)) && [ "${{ github.event.inputs.build_type }}" != "dev" ]; then
                   new_version_code=$((existing_version_code + 2))
                 else
@@ -94,14 +94,14 @@ jobs:
           echo "VERSION_NAME=${version_properties[$VERSION_NAME_KEY]}" >> $GITHUB_ENV
           echo "VERSION_CODE=${version_properties[$VERSION_CODE_KEY]}" >> $GITHUB_ENV
 
-          # Write version properties to the file
+          echo "Writing version properties to the file"
           {
             for k in "${!version_properties[@]}"; do
                 echo "$k=${version_properties[$k]}"
             done
           } > $VERSIONS_FILE
 
-      - name: Generating release notes
+      - name: Generate release notes
         run: |
           RELEASE_NOTES_FILE="release_notes.txt"
 
@@ -146,8 +146,10 @@ jobs:
           fill_release_notes_section "Implemented:" "$implemented_commits"
           fill_release_notes_section "Fixed:" "$fixed_commits"
           fill_release_notes_section "Other:" "$other_commits"
+
       - name: Create pull request
         env:
+          # Provide GH_TOKEN to authenticate with GitHub CLI, which is used to create pull request
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Checking out new branch"
@@ -156,6 +158,12 @@ jobs:
           
           git add .
           commit_message="* Build: ${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
+          
+          echo "Commiting"
           git commit -m "$commit_message"
+          
+          echo "Pushing to origin"
           git push origin "$branch_name" --force
+          
+          echo "Creating pull request"
           gh pr create --base ${{ github.ref_name }} --title "$commit_message" --body "" --label "build_preparation,${{ github.event.inputs.build_type }}"
