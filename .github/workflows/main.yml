@@ -105,32 +105,32 @@ jobs:
         run: |
           RELEASE_NOTES_FILE="release_notes.txt"
 
-          # Checkout new branch
+          echo "Checkout new branch"
           branch_name="build/${BUILD_NAME// /_}_${VERSION_NAME}_${VERSION_CODE}"
           git switch -c "$branch_name" ${{ github.ref_name }}
 
-          # Build release notes header
+          echo "Build release notes header"
           release_notes_header="${BUILD_NAME} $VERSION_NAME ($VERSION_CODE)"
           echo "$release_notes_header" > $RELEASE_NOTES_FILE
           
-          # Try getting the latest tag for this version
+          echo "Try getting the latest tag for this version"
           latest_tag=$(git tag --list "*_${VERSION_NAME}_*" --sort=-creatordate | head -n 1)
 
-          # If there was no tags for this version, just take the latest
+          echo "If there was no tags for this version, just take the latest"
           if [[ -z "$latest_tag" ]]; then
               latest_tag=$(git describe --tags --abbrev=0)
           fi
 
-          # Get commits that start with "* Fixed"
+          echo "Get commits that start with "* Fixed""
           fixed_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* fixed:')
 
-          # Get commits that start with "* Implemented"
+          echo "Get commits that start with "* Implemented""
           implemented_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i '^\* implemented:')
 
-          # Get all other commits that start with "*"
+          echo "Get all other commits that start with "*""
           other_commits=$(git log "$latest_tag"..HEAD --pretty=format:"%s" | grep -i -E '^\*' | grep -v -i -E '^\* (fixed:|implemented:)')
 
-          # Receives release notes section header and section's commits, fills release notes file
+          echo "Receives release notes section header and section's commits, fills release notes file"
           fill_release_notes_section() {
             header=$1
             commits=$2
@@ -138,14 +138,14 @@ jobs:
             if [ -n "$commits" ]; then
               echo "$header" >> $RELEASE_NOTES_FILE
               while IFS= read -r line; do
-                # Retain only symbols after "*", "Implemented:", "Fixed:"
+                echo "Retain only symbols after "*", "Implemented:", "Fixed:""
                 cut_line=$(echo "$line" | sed -E 's/.*[[:space:]]*(Fixed:|Implemented:|\*)[[:space:]]*//i')
                 echo "  $cut_line" >> $RELEASE_NOTES_FILE
               done <<< "$commits"
             fi
           }
 
-          # Add sections to release notes
+          echo "Add sections to release notes"
           fill_release_notes_section "Implemented:" "$implemented_commits"
           fill_release_notes_section "Fixed:" "$fixed_commits"
           fill_release_notes_section "Other:" "$other_commits"
