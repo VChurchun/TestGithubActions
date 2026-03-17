@@ -61,7 +61,7 @@ jobs:
           declare -A version_properties
           while IFS='=' read -r key value; do
             version_properties["$key"]="$value"
-          done < <(tr -d '\r' < "$VERSIONS_FILE") # handle carriage return in CRLF
+          done < <(sed '$a\' "$VERSIONS_FILE" | tr -d '\r')
 
           # Check if there is an override for version name
           if [ -n "${{ github.event.inputs.version_name }}" ]; then
