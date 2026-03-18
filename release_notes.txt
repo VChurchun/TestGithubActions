@@ -1,5 +1,10 @@
-LS Dev 8.13 (1723)
+LS Dev 8.13 (1724)
 Other:
+  Updated name
+  Removed branches condition
+  Build: LS Dev 8.13 (1723) (#10)
+  Added auto tag action
+  Updates
   Updates
   Increased version code
   Fixed label
