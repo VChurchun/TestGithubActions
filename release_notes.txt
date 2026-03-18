@@ -1,18 +1,1 @@
-LS Dev 8.13 (1727)
-Other:
-  Fixed missing $
-  Build: LS Dev 8.13 (1726) (#13)
-  Fixed missing quotation mark
-  Build: LS Dev 8.13 (1725) (#12)
-  Added quotation marks
-  Fixed wrong case subject
-  Build: LS Dev 8.13 (1724) (#11)
-  Updated name
-  Removed branches condition
-  Build: LS Dev 8.13 (1723) (#10)
-  Added auto tag action
-  Updates
-  Updates
-  Increased version code
-  Fixed label
-  Added build type label
+LS Proxy 8.13 (1728)
