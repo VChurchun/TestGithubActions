@@ -4,7 +4,7 @@ on:
     types: [closed]
 
 jobs:
-  tag-release:
+  tag_creation:
     # Only run if PR was merged and had build_preparation label.
     if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'build_preparation')
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           
           release_header="${build_name} ${version_name} (${version_code})"
           
-          echo "Creating release tag
+          echo "Creating release tag"
           case "$BUILD_VARIANT" in
           dev) tag_prefix="XDev" ;;
           proxy) tag_prefix="ReleaseProxy" ;;
