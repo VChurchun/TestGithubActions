@@ -1,5 +1,8 @@
-LS Dev 8.13 (1724)
+LS Dev 8.13 (1725)
 Other:
+  Added quotation marks
+  Fixed wrong case subject
+  Build: LS Dev 8.13 (1724) (#11)
   Updated name
   Removed branches condition
   Build: LS Dev 8.13 (1723) (#10)
