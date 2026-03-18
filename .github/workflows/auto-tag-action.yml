@@ -35,7 +35,7 @@ jobs:
           VERSION_CODE_KEY="VERSION_CODE"
           
           # Make appropriate build name, exit the script if build variant is unknown
-          case ${{ github.event.inputs.build_type }} in
+          case "$BUILD_VARIANT" in
           dev) build_name="LS Dev" ;;
           proxy) build_name="LS Proxy" ;;
           release) build_name="Livescore" ;;
