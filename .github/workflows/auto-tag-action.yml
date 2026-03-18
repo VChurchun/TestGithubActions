@@ -2,7 +2,6 @@ name: Auto Tag on build preparation PR
 on:
   pull_request:
     types: [closed]
-    branches: [main]
 
 jobs:
   tag-release:
