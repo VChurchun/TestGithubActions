@@ -1,5 +1,7 @@
-LS Dev 8.13 (1726)
+LS Dev 8.13 (1727)
 Other:
+  Fixed missing $
+  Build: LS Dev 8.13 (1726) (#13)
   Fixed missing quotation mark
   Build: LS Dev 8.13 (1725) (#12)
   Added quotation marks
