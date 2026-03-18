@@ -50,8 +50,8 @@ jobs:
             version_properties["$key"]="$value"
           done < <(sed '$a\' "$VERSIONS_FILE" | tr -d '\r')
           
-          version_name="${version_properties[VERSION_NAME_KEY]}"
-          version_code="${version_properties[VERSION_CODE_KEY]}"
+          version_name="${version_properties[$VERSION_NAME_KEY]}"
+          version_code="${version_properties[$VERSION_CODE_KEY]}"
           
           release_header="${build_name} ${version_name} (${version_code})"
           
