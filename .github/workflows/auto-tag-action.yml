@@ -1,4 +1,4 @@
-name: Auto Tag on build preparation PR
+name: Auto tag on build preparation PR
 on:
   pull_request:
     types: [closed]
