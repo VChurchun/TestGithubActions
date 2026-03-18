@@ -1,0 +1,66 @@
+name: Auto Tag on build preparation PR
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  tag-release:
+    # Only run if PR was merged and had build_preparation label.
+    if: github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'build_preparation')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Decide build variant based on PR labels.
+      - name: Check dev tag
+        if: contains(github.event.pull_request.labels.*.name, 'dev')
+        run: echo "BUILD_VARIANT=dev" >> $GITHUB_ENV
+
+      - name: Check proxy tag
+        if: contains(github.event.pull_request.labels.*.name, 'proxy')
+        run: echo "BUILD_VARIANT=proxy" >> $GITHUB_ENV
+
+      - name: Check release tag
+        if: contains(github.event.pull_request.labels.*.name, 'release')
+        run: echo "BUILD_VARIANT=release" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4
+      - name: Create and Push Tag
+        env:
+          # Provide GH_TOKEN to authenticate with GitHub CLI, which is used to create pull request
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSIONS_FILE="app/version.properties"
+          VERSION_NAME_KEY="VERSION_NAME"
+          VERSION_CODE_KEY="VERSION_CODE"
+          
+          # Make appropriate build name, exit the script if build variant is unknown
+          case ${{ github.event.inputs.build_type }} in
+          dev) build_name="LS Dev" ;;
+          proxy) build_name="LS Proxy" ;;
+          release) build_name="Livescore" ;;
+          *)
+            echo "Unknown build variant, should be one of these: 'dev', 'proxy', 'release'"
+            exit 1
+          esac
+          
+          echo "Creating version properties dictionary from file"
+          declare -A version_properties
+          while IFS='=' read -r key value; do
+            version_properties["$key"]="$value"
+          done < <(sed '$a\' "$VERSIONS_FILE" | tr -d '\r')
+          
+          version_name="${version_properties[VERSION_NAME_KEY]}"
+          version_code="${version_properties[VERSION_CODE_KEY]}"
+          
+          release_header="${build_name} ${version_name} (${version_code})"
+          
+          echo "Creating release tag
+          case "$BUILD_VARIANT" in
+          dev) tag_prefix="XDev" ;;
+          proxy) tag_prefix="ReleaseProxy" ;;
+          release) tag_prefix="Release" ;;
+          esac
+          tag="${tag_prefix}_${version_name}_${version_code}"
+          gh release create "$tag" --target ${{ github.base_ref }} --title "$release_header"
