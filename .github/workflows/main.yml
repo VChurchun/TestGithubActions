@@ -39,7 +39,7 @@ jobs:
       - name: Parse build type
         run: |
           # Make appropriate build name, exit the script if build variant is unknown
-          case ${{ github.event.inputs.build_type }} in
+          case "${{ github.event.inputs.build_type }}" in
           dev) build_name="LS Dev" ;;
           proxy) build_name="LS Proxy" ;;
           release) build_name="Livescore" ;;
