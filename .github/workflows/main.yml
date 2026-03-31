@@ -18,7 +18,7 @@ on:
 
       increment_version_code:
         description: 'Whether to increment version code if it is not provided explicitly (Optional)'
-        required: false
+        required: true
         default: true
         type: boolean
 
@@ -85,7 +85,7 @@ jobs:
                 new_version_code=1
                 version_properties[$VERSION_CODE_KEY]="$new_version_code"
             else
-                if [ "${{ github.event.inputs.increment_version_code }}" = "false" ]; then
+                if [ "${{ github.event.inputs.increment_version_code }}" = false ]; then
                   echo "Version code increment is disabled, keeping existing version code"
                   new_version_code=$existing_version_code
                 else
