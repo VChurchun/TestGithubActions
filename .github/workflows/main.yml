@@ -58,6 +58,9 @@ jobs:
           echo "BUILD_NAME=$build_name" >> $GITHUB_ENV
 
       - name: Update version name and version code
+        env:
+          # GitHub booleans are passed as strings "true" or "false"
+          SHOULD_INCREMENT: ${{ github.event.inputs.increment_version_code }}
         run: |
           VERSIONS_FILE="app/version.properties"
           VERSION_NAME_KEY="VERSION_NAME"
@@ -85,7 +88,7 @@ jobs:
                 new_version_code=1
                 version_properties[$VERSION_CODE_KEY]="$new_version_code"
             else
-                if [ "${{ github.event.inputs.increment_version_code }}" = "false" ]; then
+                if [ "$SHOULD_INCREMENT" = "false" ]; then
                   echo "Version code increment is disabled, keeping existing version code"
                   new_version_code=$existing_version_code
                 else
