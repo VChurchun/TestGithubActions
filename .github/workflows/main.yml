@@ -76,7 +76,7 @@ jobs:
 
           echo "Checking if there is an override for version code"
           if [ -n "${{ github.event.inputs.version_code }}" ]; then
-            version_properties[$VERSION_CODE_KEY]=${{ github.event.inputs.version_code }}
+            version_properties["$VERSION_CODE_KEY"]="${{ github.event.inputs.version_code }}"
             else
             existing_version_code=${version_properties[$VERSION_CODE_KEY]}
             # Check if version code is missing
@@ -85,10 +85,7 @@ jobs:
                 new_version_code=1
                 version_properties[$VERSION_CODE_KEY]="$new_version_code"
             else
-                if [ "${{ github.event.inputs.increment_version_code }}" = false ]; then
-                  echo "Version code increment is disabled, keeping existing version code"
-                  new_version_code=$existing_version_code
-                else
+                if [ "${{ github.event.inputs.increment_version_code }}" = "true" ]; then
                   echo "Incrementing existing version code"
                   # Only dev variant supports uneven numbers
                   if ((existing_version_code % 2 == 0)) && [ "${{ github.event.inputs.build_type }}" != "dev" ]; then
@@ -96,7 +93,10 @@ jobs:
                   else
                     new_version_code=$((existing_version_code + 1))
                   fi
-                  version_properties[$VERSION_CODE_KEY]="$new_version_code"
+                  version_properties[$VERSION_CODE_KEY]="$new_version_code" 
+                else
+                  echo "Version code increment is disabled, keeping existing version code"
+                  new_version_code=$existing_version_code
                 fi
               fi
           fi
