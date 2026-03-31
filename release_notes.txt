@@ -1,1 +1,8 @@
-LS Proxy 8.13 (1728)
+LS Dev 8.13 (1930)
+Other:
+  code restructured
+  test
+  fix
+  Added SHOULD_INCREMENT
+  Added quotation marks when comparing boolean
+  Added increment_version_code
